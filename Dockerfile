@@ -1,10 +1,24 @@
-FROM node:18.15.0-alpine3.17
+# Use Node 20 Alpine (lightweight)
+FROM node:20-alpine
+
 WORKDIR /usr/src/app
-COPY . .
+
+# Install Firefox (headless) and bash
 RUN apk update && \
-  apk add --no-cache firefox-esr && \
-  npm ci && \
-  npm install lodash && \
-  npm install --loglevel=error
+    apk add --no-cache firefox-esr bash
+
+# Copy package files first for caching
+COPY package*.json ./
+
+# Install dependencies (npm ci works because package-lock.json exists)
+RUN npm ci
+
+# Copy the rest of the app
+COPY . .
+
+# Expose app port
 EXPOSE 9005
-ENTRYPOINT [ "npm", "start", "--","--docker"]
+
+# Start app
+ENTRYPOINT ["npm", "start", "--", "--docker"]
+
